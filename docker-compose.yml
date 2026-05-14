@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: kemri-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: kemri_root_pass
+      MYSQL_DATABASE: kemri_rh_survey
+      MYSQL_USER: kemri_user
+      MYSQL_PASSWORD: kemri_user_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kemri-api
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: kemri_user
+      DB_PASSWORD: kemri_user_pass
+      DB_NAME: kemri_rh_survey
+      PORT: 3000
+      NODE_ENV: production
+      API_PREFIX: /api/v1
+      CORS_ORIGIN: http://localhost:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - node -e "const http=require('http');http.get('http://127.0.0.1:3000/ready',res=>process.exit(res.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:3000/api/v1
+    container_name: kemri-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

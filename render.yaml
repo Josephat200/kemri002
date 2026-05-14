@@ -1,0 +1,30 @@
+# Render service definitions for this repository
+# Backend and frontend are deployed as Docker services.
+services:
+  - type: web
+    name: kemri-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8000"
+
+  - type: web
+    name: kemri-frontend
+    env: docker
+    dockerfilePath: frontend/Dockerfile
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+# Note: This repo uses MySQL (see backend/src/config/database.ts).
+# Render does not offer a managed MySQL service in all plans —
+# provision an external MySQL instance (RDS, PlanetScale, ClearDB, etc.)
+# and set the DB_* environment variables (DB_HOST, DB_PORT, DB_USER,
+# DB_PASSWORD, DB_NAME) in the Render service settings for `kemri-backend`.
