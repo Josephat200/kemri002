@@ -7,6 +7,13 @@ The repository now has one production backend and one production frontend:
 - Frontend: `frontend/` built as a static production bundle
 - Local production-style orchestration: `docker-compose.yml`
 
+## Documentation
+
+- [Languages Used](LANGUAGES_USED.md)
+- [API Documentation](API_DOCUMENTATION.md)
+- [Railway Deployment](RAILWAY_DEPLOYMENT.md)
+- [Render Deployment Guide](render/DEPLOYMENT.md)
+
 ## Production Layout
 
 ```
