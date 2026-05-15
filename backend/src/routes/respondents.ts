@@ -33,6 +33,13 @@ router.get('/', RespondentController.getAll);
 router.get('/stats/summary', RespondentController.getStatistics);
 
 /**
+ * @route GET /api/v1/respondents/export/excel
+ * @desc Export respondents to Excel
+ * @returns file download
+ */
+router.get('/export/excel', RespondentController.exportExcel);
+
+/**
  * @route GET /api/v1/respondents/stats/date-range
  * @desc Get respondents by date range
  * @query {string} startDate - Start date (YYYY-MM-DD)

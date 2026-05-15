@@ -113,6 +113,22 @@ export class RespondentModel {
   }
 
   /**
+   * Get all respondents without pagination for exports and reporting
+   */
+  static async getAllForExport(): Promise<IRespondent[]> {
+    const connection = await pool.getConnection();
+    try {
+      const [rows] = await connection.execute(
+        'SELECT * FROM respondents ORDER BY created_at DESC'
+      );
+
+      return rows as IRespondent[];
+    } finally {
+      connection.release();
+    }
+  }
+
+  /**
    * Update respondent
    */
   static async update(id: number, respondent: Partial<IRespondent>): Promise<boolean> {
@@ -123,7 +139,7 @@ export class RespondentModel {
 
       // Build dynamic update query
       Object.entries(respondent).forEach(([key, value]) => {
-        if (key !== 'id' && key !== 'created_at') {
+        if (key !== 'id' && key !== 'created_at' && value !== undefined) {
           fields.push(`${key} = ?`);
           values.push(value);
         }

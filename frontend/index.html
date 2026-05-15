@@ -1,13 +1,745 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KEMRI RH Survey System</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <link rel="stylesheet" href="css/styles.css?v=20260515">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-brand">
+                    <h1>KEMRI RH Survey</h1>
+                </div>
+                <ul class="navbar-menu">
+                    <li><a href="#/" class="nav-link">Home</a></li>
+                    <li><a href="#/respondents" class="nav-link">Respondents</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-container">
+            <div id="page-content"></div>
+        </main>
+
+        <!-- Alert Container -->
+        <div id="alerts-container" class="alerts-container"></div>
+    </div>
+
+    <!-- Page Templates (Hidden) -->
+    
+    <!-- Home Page Template -->
+    <template id="home-page-template">
+        <div class="home-page">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">KEMRI RH Survey System</h1>
+                <p class="text-lg text-gray-600">Reproductive Health Data Collection & Analysis</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button class="btn btn-primary btn-lg w-full" data-nav="/respondents/new" type="button">
+                    <span class="icon">➕</span>
+                    Add New Respondent
+                </button>
+                <button class="btn btn-outline btn-lg w-full" data-nav="/respondents" type="button">
+                    <span class="icon">👥</span>
+                    View All Respondents
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Total Respondents</h3>
+                        <span class="icon">👥</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="text-2xl font-bold" id="total-respondents">-</div>
+                        <p class="text-xs text-gray-500">Loading...</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>This Month</h3>
+                        <span class="icon">📊</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="text-2xl font-bold" id="this-month-count">-</div>
+                        <p class="text-xs text-gray-500">May 2026</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>This Year</h3>
+                        <span class="icon">📈</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="text-2xl font-bold" id="this-year-count">-</div>
+                        <p class="text-xs text-gray-500">2026</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Respondents List Page Template -->
+    <template id="respondents-page-template">
+        <div class="respondents-page">
+            <div class="page-header">
+                <h2>Respondents</h2>
+                <div class="page-actions">
+                    <button class="btn btn-outline" data-action="export-excel" type="button">Export Excel</button>
+                    <button class="btn btn-primary" data-nav="/respondents/new" type="button">+ New Respondent</button>
+                </div>
+            </div>
+
+            <div class="respondents-list" id="respondents-list">
+                <p class="text-center text-gray-500">Loading respondents...</p>
+            </div>
+        </div>
+    </template>
+
+    <!-- Create Respondent Page Template -->
+    <template id="create-respondent-page-template">
+        <div class="create-respondent-page">
+            <div class="page-header">
+                <h2>Add New Respondent</h2>
+            </div>
+
+            <form id="respondent-form" class="respondent-form">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Basic Information</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="serial_no">Serial Number *</label>
+                            <input type="text" id="serial_no" name="serial_no" placeholder="RH001" required>
+                            <span class="error-message" id="error-serial_no"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="school_name">School Name *</label>
+                            <input type="text" id="school_name" name="school_name" placeholder="Kennedy High School" required>
+                            <span class="error-message" id="error-school_name"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="supervisor_name">Supervisor Name *</label>
+                            <input type="text" id="supervisor_name" name="supervisor_name" placeholder="John Doe" required>
+                            <span class="error-message" id="error-supervisor_name"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="collection_date">Collection Date *</label>
+                            <input type="date" id="collection_date" name="collection_date" required>
+                            <span class="error-message" id="error-collection_date"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="age">Age *</label>
+                            <select id="age" name="age" required>
+                                <option value="">Select Age</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                                <option value="17">17</option>
+                                <option value="18">18</option>
+                                <option value="19">19</option>
+                            </select>
+                            <span class="error-message" id="error-age"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="family_size">Family Size *</label>
+                            <select id="family_size" name="family_size" required>
+                                <option value="">Select Family Size</option>
+                            </select>
+                            <span class="error-message" id="error-family_size"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Family Background -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Family Background</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="stay_with">Who do you stay with? *</label>
+                            <select id="stay_with" name="stay_with" required>
+                                <option value="">Select Option</option>
+                                <option value="1">Both Parents</option>
+                                <option value="2">Mother Only</option>
+                                <option value="3">Father Only</option>
+                                <option value="4">Others</option>
+                            </select>
+                            <span class="error-message" id="error-stay_with"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="guardian_occupation">Guardian Occupation *</label>
+                            <select id="guardian_occupation" name="guardian_occupation" required>
+                                <option value="">Select Occupation</option>
+                                <option value="1">Employed</option>
+                                <option value="2">Self-Employed</option>
+                                <option value="3">Unemployed</option>
+                                <option value="4">Retired</option>
+                                <option value="5">Other</option>
+                            </select>
+                            <span class="error-message" id="error-guardian_occupation"></span>
+                        </div>
+
+                        <div class="form-group" id="guardian_occupation_other_group" style="display: none;">
+                            <label for="guardian_occupation_other">Guardian Occupation - Other (Please specify)</label>
+                            <input type="text" id="guardian_occupation_other" name="guardian_occupation_other" placeholder="Specify other occupation">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="guardian_education">Guardian Education Level *</label>
+                            <select id="guardian_education" name="guardian_education" required>
+                                <option value="">Select Education Level</option>
+                                <option value="1">No Formal Education</option>
+                                <option value="2">Primary</option>
+                                <option value="3">Secondary</option>
+                                <option value="4">Tertiary</option>
+                            </select>
+                            <span class="error-message" id="error-guardian_education"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="religion">Religion *</label>
+                            <select id="religion" name="religion" required>
+                                <option value="">Select Religion</option>
+                                <option value="1">Catholic</option>
+                                <option value="2">Protestant</option>
+                                <option value="3">Muslim</option>
+                                <option value="4">Traditional</option>
+                                <option value="5">Other</option>
+                            </select>
+                            <span class="error-message" id="error-religion"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label>Do you have older siblings? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="older_siblings" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="older_siblings" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="error-older_siblings"></span>
+                    </div>
+
+                    <div class="form-group" id="siblings_have_partners_group" style="display: none;">
+                        <label>Do your siblings have partners? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="siblings_have_partners" value="1"> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="siblings_have_partners" value="0"> No
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Financial Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Do your parents give you pocket money? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="parents_give_pocket_money" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="parents_give_pocket_money" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="error-parents_give_pocket_money"></span>
+                    </div>
+
+                    <div class="form-group" id="pocket_money_adequate_group" style="display: none;">
+                        <label>Is the pocket money adequate? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="pocket_money_adequate" value="1"> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="pocket_money_adequate" value="0"> No
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label for="financial_support_source">Who provides your financial support? *</label>
+                        <select id="financial_support_source" name="financial_support_source" required>
+                            <option value="">Select Source</option>
+                            <option value="1">Parents</option>
+                            <option value="2">Relatives</option>
+                            <option value="3">Guardians</option>
+                            <option value="4">Other</option>
+                        </select>
+                        <span class="error-message" id="error-financial_support_source"></span>
+                    </div>
+                </div>
+
+                <!-- Guardian Visits -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Guardian Contact</h3>
+                    
+                    <div class="form-group">
+                        <label>Do your guardians visit you? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="guardian_visits" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="guardian_visits" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="error-guardian_visits"></span>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label for="school_visitor">How often do your guardians visit school?</label>
+                        <select id="school_visitor" name="school_visitor">
+                            <option value="">Select Frequency</option>
+                            <option value="1">Daily</option>
+                            <option value="2">Weekly</option>
+                            <option value="3">Monthly</option>
+                            <option value="4">Rarely</option>
+                            <option value="5">Never</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Reproductive Health Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Reproductive Health Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Have you received reproductive health information? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="has_rh_info" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="has_rh_info" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="error-has_rh_info"></span>
+                    </div>
+
+                    <div id="rh_info_sources" style="display: none;">
+                        <h4 class="form-subsection-title">Where did you get the information? (Select all that apply)</h4>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_teacher" value="1"> From Teacher
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_parents" value="1"> From Parents
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_health_worker" value="1"> From Health Worker
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_friends" value="1"> From Friends
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_media" value="1"> From Media/Internet
+                            </label>
+                        </div>
+
+                        <h4 class="form-subsection-title mt-6">Topics Covered (Select all that apply)</h4>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_sexuality" value="1"> Sexuality
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_abstinence" value="1"> Abstinence
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_condoms" value="1"> Condoms
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_sti_hiv" value="1"> STI/HIV
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_relationships" value="1"> Relationships
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label>Is the information adequate? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="info_adequate" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="info_adequate" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="error-info_adequate"></span>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Respondent</button>
+                    <button type="button" class="btn btn-outline" data-nav="/respondents">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </template>
+
+    <!-- Edit Respondent Page Template -->
+    <template id="edit-respondent-page-template">
+        <div class="edit-respondent-page">
+            <div class="page-header">
+                <h2>Edit Respondent</h2>
+            </div>
+
+            <form id="edit-respondent-form" class="respondent-form">
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Basic Information</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="edit-serial_no">Serial Number *</label>
+                            <input type="text" id="edit-serial_no" name="serial_no" placeholder="RH001" disabled>
+                            <span class="error-message" id="edit-error-serial_no"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-school_name">School Name *</label>
+                            <input type="text" id="edit-school_name" name="school_name" placeholder="Kennedy High School" required>
+                            <span class="error-message" id="edit-error-school_name"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-supervisor_name">Supervisor Name *</label>
+                            <input type="text" id="edit-supervisor_name" name="supervisor_name" placeholder="John Doe" required>
+                            <span class="error-message" id="edit-error-supervisor_name"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-collection_date">Collection Date *</label>
+                            <input type="date" id="edit-collection_date" name="collection_date" required>
+                            <span class="error-message" id="edit-error-collection_date"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-age">Age *</label>
+                            <select id="edit-age" name="age" required>
+                                <option value="">Select Age</option>
+                                <option value="15">15</option>
+                                <option value="16">16</option>
+                                <option value="17">17</option>
+                                <option value="18">18</option>
+                                <option value="19">19</option>
+                            </select>
+                            <span class="error-message" id="edit-error-age"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-family_size">Family Size *</label>
+                            <select id="edit-family_size" name="family_size" required>
+                                <option value="">Select Family Size</option>
+                            </select>
+                            <span class="error-message" id="edit-error-family_size"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Family Background -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Family Background</h3>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="edit-stay_with">Who do you stay with? *</label>
+                            <select id="edit-stay_with" name="stay_with" required>
+                                <option value="">Select Option</option>
+                                <option value="1">Both Parents</option>
+                                <option value="2">Mother Only</option>
+                                <option value="3">Father Only</option>
+                                <option value="4">Others</option>
+                            </select>
+                            <span class="error-message" id="edit-error-stay_with"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-guardian_occupation">Guardian Occupation *</label>
+                            <select id="edit-guardian_occupation" name="guardian_occupation" required>
+                                <option value="">Select Occupation</option>
+                                <option value="1">Employed</option>
+                                <option value="2">Self-Employed</option>
+                                <option value="3">Unemployed</option>
+                                <option value="4">Retired</option>
+                                <option value="5">Other</option>
+                            </select>
+                            <span class="error-message" id="edit-error-guardian_occupation"></span>
+                        </div>
+
+                        <div class="form-group" id="edit-guardian_occupation_other_group" style="display: none;">
+                            <label for="edit-guardian_occupation_other">Guardian Occupation - Other (Please specify)</label>
+                            <input type="text" id="edit-guardian_occupation_other" name="guardian_occupation_other" placeholder="Specify other occupation">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-guardian_education">Guardian Education Level *</label>
+                            <select id="edit-guardian_education" name="guardian_education" required>
+                                <option value="">Select Education Level</option>
+                                <option value="1">No Formal Education</option>
+                                <option value="2">Primary</option>
+                                <option value="3">Secondary</option>
+                                <option value="4">Tertiary</option>
+                            </select>
+                            <span class="error-message" id="edit-error-guardian_education"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-religion">Religion *</label>
+                            <select id="edit-religion" name="religion" required>
+                                <option value="">Select Religion</option>
+                                <option value="1">Catholic</option>
+                                <option value="2">Protestant</option>
+                                <option value="3">Muslim</option>
+                                <option value="4">Traditional</option>
+                                <option value="5">Other</option>
+                            </select>
+                            <span class="error-message" id="edit-error-religion"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label>Do you have older siblings? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="older_siblings" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="older_siblings" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="edit-error-older_siblings"></span>
+                    </div>
+
+                    <div class="form-group" id="edit-siblings_have_partners_group" style="display: none;">
+                        <label>Do your siblings have partners? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="siblings_have_partners" value="1"> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="siblings_have_partners" value="0"> No
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Financial Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Do your parents give you pocket money? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="parents_give_pocket_money" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="parents_give_pocket_money" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="edit-error-parents_give_pocket_money"></span>
+                    </div>
+
+                    <div class="form-group" id="edit-pocket_money_adequate_group" style="display: none;">
+                        <label>Is the pocket money adequate? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="pocket_money_adequate" value="1"> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="pocket_money_adequate" value="0"> No
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label for="edit-financial_support_source">Who provides your financial support? *</label>
+                        <select id="edit-financial_support_source" name="financial_support_source" required>
+                            <option value="">Select Source</option>
+                            <option value="1">Parents</option>
+                            <option value="2">Relatives</option>
+                            <option value="3">Guardians</option>
+                            <option value="4">Other</option>
+                        </select>
+                        <span class="error-message" id="edit-error-financial_support_source"></span>
+                    </div>
+                </div>
+
+                <!-- Guardian Visits -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Guardian Contact</h3>
+                    
+                    <div class="form-group">
+                        <label>Do your guardians visit you? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="guardian_visits" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="guardian_visits" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="edit-error-guardian_visits"></span>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label for="edit-school_visitor">How often do your guardians visit school?</label>
+                        <select id="edit-school_visitor" name="school_visitor">
+                            <option value="">Select Frequency</option>
+                            <option value="1">Daily</option>
+                            <option value="2">Weekly</option>
+                            <option value="3">Monthly</option>
+                            <option value="4">Rarely</option>
+                            <option value="5">Never</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Reproductive Health Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Reproductive Health Information</h3>
+                    
+                    <div class="form-group">
+                        <label>Have you received reproductive health information? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="has_rh_info" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="has_rh_info" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="edit-error-has_rh_info"></span>
+                    </div>
+
+                    <div id="edit-rh_info_sources" style="display: none;">
+                        <h4 class="form-subsection-title">Where did you get the information? (Select all that apply)</h4>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_teacher" value="1"> From Teacher
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_parents" value="1"> From Parents
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_health_worker" value="1"> From Health Worker
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_friends" value="1"> From Friends
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="rh_media" value="1"> From Media/Internet
+                            </label>
+                        </div>
+
+                        <h4 class="form-subsection-title mt-6">Topics Covered (Select all that apply)</h4>
+                        
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_sexuality" value="1"> Sexuality
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_abstinence" value="1"> Abstinence
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_condoms" value="1"> Condoms
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_sti_hiv" value="1"> STI/HIV
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="topic_relationships" value="1"> Relationships
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label>Is the information adequate? *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="info_adequate" value="1" required> Yes
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="info_adequate" value="0" required> No
+                            </label>
+                        </div>
+                        <span class="error-message" id="edit-error-info_adequate"></span>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Respondent</button>
+                    <button type="button" class="btn btn-outline" data-nav="/respondents">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </template>
+
+    <!-- Scripts -->
+    <script src="js/utils.js?v=20260515"></script>
+    <script src="js/api.js?v=20260515"></script>
+    <script src="js/main.js?v=20260515"></script>
+</body>
 </html>

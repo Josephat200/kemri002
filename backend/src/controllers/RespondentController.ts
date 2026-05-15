@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { RespondentService } from '../services/RespondentService';
 import { IApiResponse, IRespondentCreateRequest } from '../types/respondent';
 import logger from '../config/logger';
+import { ExcelExportService } from '../services/ExcelExportService';
 
 export class RespondentController {
   /**
@@ -217,6 +218,24 @@ export class RespondentController {
       };
 
       res.json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /api/v1/respondents/export/excel
+   * Export respondents to Excel
+   */
+  static async exportExcel(req: Request, res: Response, next: NextFunction) {
+    try {
+      const workbookBuffer = await ExcelExportService.buildRespondentWorkbook();
+      const filename = `respondents-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Cache-Control', 'no-store');
+      res.send(workbookBuffer);
     } catch (error) {
       next(error);
     }

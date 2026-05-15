@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
 import respondentRoutes from './routes/respondents';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import logger from './config/logger';
@@ -13,6 +14,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const API_PREFIX = process.env.API_PREFIX || '/api/v1';
+const frontendPath = path.resolve(process.cwd(), '..', 'frontend');
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -20,13 +26,24 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: (process.env.CORS_ORIGIN || 'http://localhost:3000')
-    .split(',')
-    .map((origin) => origin.trim()),
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`CORS blocked for origin ${origin}`));
+  },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Serve the production frontend from the repository frontend directory
+app.use(express.static(frontendPath, {
+  extensions: ['html'],
+  maxAge: 0,
+}));
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -60,6 +77,10 @@ app.get('/ready', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
   }
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // API Routes

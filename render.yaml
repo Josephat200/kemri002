@@ -1,3 +1,19 @@
+services:
+  - type: web
+    name: kemri-backend
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    buildCommand: ""
+    startCommand: ""
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: API_PREFIX
+        value: "/api/v1"
+    autoDeploy: true
 # Render service definitions for this repository
 # Backend and frontend are deployed as Docker services.
 services:

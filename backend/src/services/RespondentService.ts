@@ -107,13 +107,30 @@ export class RespondentService {
    * Get statistics
    */
   static async getStatistics() {
-    // This would require additional queries to gather statistics
-    // For now, returning a placeholder structure
+    const respondents = await RespondentModel.getAllForExport();
+
+    const bySchool = respondents.reduce<Record<string, number>>((accumulator, respondent) => {
+      accumulator[respondent.school_name] = (accumulator[respondent.school_name] || 0) + 1;
+      return accumulator;
+    }, {});
+
+    const byAge = respondents.reduce<Record<string, number>>((accumulator, respondent) => {
+      const ageKey = String(respondent.age);
+      accumulator[ageKey] = (accumulator[ageKey] || 0) + 1;
+      return accumulator;
+    }, {});
+
+    const rhInfoAdequacy = respondents.reduce<Record<string, number>>((accumulator, respondent) => {
+      const key = respondent.info_adequate === 1 ? 'Adequate' : 'Not Adequate';
+      accumulator[key] = (accumulator[key] || 0) + 1;
+      return accumulator;
+    }, {});
+
     return {
-      totalRespondents: 0,
-      bySchool: {},
-      byAge: {},
-      rhInfoAdequacy: {},
+      totalRespondents: respondents.length,
+      bySchool,
+      byAge,
+      rhInfoAdequacy,
     };
   }
 }
