@@ -3,3 +3,7 @@
 !backend/
 !backend/**
 !.dockerignore
+!frontend/
+!frontend/**
+!supabase/
+!supabase/**
