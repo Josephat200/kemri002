@@ -2,6 +2,21 @@
 
 This project has been refactored to use Supabase as the only database backend.
 
+## 0. Optional Supabase CLI setup
+
+If you want the repository linked to your Supabase project from CLI:
+
+```bash
+supabase login
+supabase init
+supabase link --project-ref qdbkdimgwfyemcgeqicr
+```
+
+Notes:
+- `supabase login` requires your personal access token from Supabase.
+- `supabase init` has already been prepared in this repository (`supabase/config.toml`).
+- The linked project ref for this repo is `qdbkdimgwfyemcgeqicr`.
+
 ## 1. Create the database objects in one paste
 
 In Supabase:
