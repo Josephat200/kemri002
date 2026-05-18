@@ -1,13 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { RespondentService } from '../services/RespondentService';
 import { IApiResponse, IRespondentCreateRequest } from '../types/respondent';
-import logger from '../config/logger';
 
 export class RespondentController {
-  /**
-   * POST /api/v1/respondents
-   * Create a new respondent
-   */
   static async create(req: Request, res: Response, next: NextFunction) {
     try {
       const data = req.body as IRespondentCreateRequest;
@@ -26,10 +21,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * GET /api/v1/respondents/:id
-   * Get respondent by ID
-   */
   static async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(req.params.id);
@@ -56,10 +47,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * GET /api/v1/respondents
-   * Get all respondents with pagination
-   */
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
       const page = parseInt(req.query.page as string) || 1;
@@ -87,10 +74,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * PUT /api/v1/respondents/:id
-   * Update respondent
-   */
   static async update(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(req.params.id);
@@ -118,10 +101,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * DELETE /api/v1/respondents/:id
-   * Delete respondent
-   */
   static async delete(req: Request, res: Response, next: NextFunction) {
     try {
       const id = parseInt(req.params.id);
@@ -148,10 +127,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * GET /api/v1/respondents/school/:schoolName
-   * Get respondents by school
-   */
   static async getBySchool(req: Request, res: Response, next: NextFunction) {
     try {
       const schoolName = decodeURIComponent(req.params.schoolName);
@@ -169,10 +144,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * GET /api/v1/respondents/stats/date-range
-   * Get respondents by date range
-   */
   static async getByDateRange(req: Request, res: Response, next: NextFunction) {
     try {
       const { startDate, endDate } = req.query;
@@ -202,10 +173,6 @@ export class RespondentController {
     }
   }
 
-  /**
-   * GET /api/v1/respondents/stats/summary
-   * Get statistics
-   */
   static async getStatistics(req: Request, res: Response, next: NextFunction) {
     try {
       const stats = await RespondentService.getStatistics();

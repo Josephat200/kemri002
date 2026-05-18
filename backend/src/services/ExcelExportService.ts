@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { RespondentModel } from '../models/RespondentModel';
+import { RespondentService } from './RespondentService';
 
 const appendSummaryRow = (
   worksheet: ExcelJS.Worksheet,
@@ -13,7 +13,7 @@ const appendSummaryRow = (
 
 export class ExcelExportService {
   static async buildRespondentWorkbook(): Promise<Buffer> {
-    const respondents = await RespondentModel.getAllForExport();
+    const respondents = await RespondentService.getAllForExport();
     const workbook = new ExcelJS.Workbook();
 
     workbook.creator = 'KEMRI RH Survey System';

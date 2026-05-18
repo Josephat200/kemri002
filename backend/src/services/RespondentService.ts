@@ -1,113 +1,170 @@
-import { RespondentModel } from '../models/RespondentModel';
-import { IRespondent, IRespondentCreateRequest } from '../types/respondent';
 import { ApiError } from '../middleware/errorHandler';
+import { IRespondent, IRespondentCreateRequest } from '../types/respondent';
+import { supabase } from '../config/supabase';
 import logger from '../config/logger';
 
-export class RespondentService {
-  /**
-   * Create a new respondent
-   */
-  static async createRespondent(data: IRespondentCreateRequest): Promise<IRespondent> {
-    try {
-      // Check if serial number already exists
-      const exists = await RespondentModel.serialNumberExists(data.serial_no);
-      if (exists) {
-        throw new ApiError(409, `Serial number ${data.serial_no} already exists`);
-      }
+const TABLE = 'respondents';
 
-      const id = await RespondentModel.create(data);
-      const respondent = await RespondentModel.getById(id);
+const normalizeOptionalFields = <T extends Record<string, any>>(data: T): T => {
+  const normalized = { ...data };
 
-      if (!respondent) {
-        throw new ApiError(500, 'Failed to create respondent');
-      }
-
-      logger.info(`Respondent created with ID: ${id}`);
-      return respondent;
-    } catch (error) {
-      logger.error(`Error creating respondent: ${error}`);
-      throw error;
+  Object.entries(normalized).forEach(([key, value]) => {
+    if (value === undefined || value === '') {
+      (normalized as any)[key] = null;
     }
+  });
+
+  return normalized;
+};
+
+const mapSupabaseError = (error: any): ApiError => {
+  if (!error) {
+    return new ApiError(500, 'Unknown Supabase error');
   }
 
-  /**
-   * Get respondent by ID
-   */
+  if (error.code === '23505') {
+    return new ApiError(409, 'Serial number already exists');
+  }
+
+  return new ApiError(500, error.message || 'Supabase request failed');
+};
+
+export class RespondentService {
+  static async createRespondent(data: IRespondentCreateRequest): Promise<IRespondent> {
+    const payload = normalizeOptionalFields(data);
+
+    const { data: inserted, error } = await supabase
+      .from(TABLE)
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) {
+      logger.error(`Error creating respondent: ${error.message}`);
+      throw mapSupabaseError(error);
+    }
+
+    return inserted as IRespondent;
+  }
+
   static async getRespondent(id: number): Promise<IRespondent> {
-    const respondent = await RespondentModel.getById(id);
-    if (!respondent) {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      throw mapSupabaseError(error);
+    }
+
+    if (!data) {
       throw new ApiError(404, `Respondent with ID ${id} not found`);
     }
-    return respondent;
+
+    return data as IRespondent;
   }
 
-  /**
-   * Get all respondents with pagination
-   */
   static async getAllRespondents(page: number = 1, limit: number = 20) {
     if (page < 1 || limit < 1) {
       throw new ApiError(400, 'Page and limit must be positive integers');
     }
-    return RespondentModel.getAll(page, limit);
-  }
 
-  /**
-   * Update respondent
-   */
-  static async updateRespondent(
-    id: number,
-    data: Partial<IRespondent>
-  ): Promise<IRespondent> {
-    const respondent = await this.getRespondent(id);
+    const offset = (page - 1) * limit;
 
-    const updated = await RespondentModel.update(id, data);
-    if (!updated) {
-      throw new ApiError(500, 'Failed to update respondent');
+    const { data, count, error } = await supabase
+      .from(TABLE)
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      throw mapSupabaseError(error);
     }
 
-    const updatedRespondent = await RespondentModel.getById(id);
-    if (!updatedRespondent) {
-      throw new ApiError(500, 'Failed to fetch updated respondent');
-    }
-
-    logger.info(`Respondent ${id} updated`);
-    return updatedRespondent;
+    return {
+      data: (data || []) as IRespondent[],
+      total: count || 0,
+    };
   }
 
-  /**
-   * Delete respondent
-   */
+  static async updateRespondent(id: number, data: Partial<IRespondent>): Promise<IRespondent> {
+    await this.getRespondent(id);
+
+    const payload = normalizeOptionalFields(data);
+    delete (payload as any).id;
+    delete (payload as any).created_at;
+    delete (payload as any).updated_at;
+
+    const { data: updated, error } = await supabase
+      .from(TABLE)
+      .update(payload)
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) {
+      throw mapSupabaseError(error);
+    }
+
+    return updated as IRespondent;
+  }
+
   static async deleteRespondent(id: number): Promise<boolean> {
-    await this.getRespondent(id); // Check if exists
+    await this.getRespondent(id);
 
-    const deleted = await RespondentModel.delete(id);
-    if (!deleted) {
-      throw new ApiError(500, 'Failed to delete respondent');
+    const { error } = await supabase.from(TABLE).delete().eq('id', id);
+    if (error) {
+      throw mapSupabaseError(error);
     }
 
-    logger.info(`Respondent ${id} deleted`);
     return true;
   }
 
-  /**
-   * Get respondents by school
-   */
-  static async getBySchool(schoolName: string) {
-    return RespondentModel.getBySchool(schoolName);
+  static async getBySchool(schoolName: string): Promise<IRespondent[]> {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .eq('school_name', schoolName)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapSupabaseError(error);
+    }
+
+    return (data || []) as IRespondent[];
   }
 
-  /**
-   * Get respondents by date range
-   */
-  static async getByDateRange(startDate: string, endDate: string) {
-    return RespondentModel.getByDateRange(startDate, endDate);
+  static async getByDateRange(startDate: string, endDate: string): Promise<IRespondent[]> {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .gte('collection_date', startDate)
+      .lte('collection_date', endDate)
+      .order('collection_date', { ascending: false });
+
+    if (error) {
+      throw mapSupabaseError(error);
+    }
+
+    return (data || []) as IRespondent[];
   }
 
-  /**
-   * Get statistics
-   */
+  static async getAllForExport(): Promise<IRespondent[]> {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw mapSupabaseError(error);
+    }
+
+    return (data || []) as IRespondent[];
+  }
+
   static async getStatistics() {
-    const respondents = await RespondentModel.getAllForExport();
+    const respondents = await this.getAllForExport();
 
     const bySchool = respondents.reduce<Record<string, number>>((accumulator, respondent) => {
       accumulator[respondent.school_name] = (accumulator[respondent.school_name] || 0) + 1;
@@ -121,7 +178,7 @@ export class RespondentService {
     }, {});
 
     const rhInfoAdequacy = respondents.reduce<Record<string, number>>((accumulator, respondent) => {
-      const key = respondent.info_adequate === 1 ? 'Adequate' : 'Not Adequate';
+      const key = respondent.info_adequate === 1 ? 'adequate' : 'not_adequate';
       accumulator[key] = (accumulator[key] || 0) + 1;
       return accumulator;
     }, {});

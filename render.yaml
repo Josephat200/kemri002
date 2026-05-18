@@ -1,46 +1,23 @@
 services:
   - type: web
-    name: kemri-backend
+    name: kemri-app
     env: docker
-    plan: free
     dockerfilePath: Dockerfile
-    buildCommand: ""
-    startCommand: ""
+    plan: starter
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: "3000"
       - key: API_PREFIX
-        value: "/api/v1"
-    autoDeploy: true
-# Render service definitions for this repository
-# Backend and frontend are deployed as Docker services.
-services:
-  - type: web
-    name: kemri-backend
-    env: docker
-    dockerfilePath: backend/Dockerfile
-    plan: starter
-    autoDeploy: true
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: "8000"
+        value: /api/v1
+      - key: SUPABASE_URL
+        value: https://qdbkdimgwfyemcgeqicr.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
 
-  - type: web
-    name: kemri-frontend
-    env: docker
-    dockerfilePath: frontend/Dockerfile
-    plan: starter
-    autoDeploy: true
-    envVars:
-      - key: NODE_ENV
-        value: production
-
-# Note: This repo uses MySQL (see backend/src/config/database.ts).
-# Render does not offer a managed MySQL service in all plans —
-# provision an external MySQL instance (RDS, PlanetScale, ClearDB, etc.)
-# and set the DB_* environment variables (DB_HOST, DB_PORT, DB_USER,
-# DB_PASSWORD, DB_NAME) in the Render service settings for `kemri-backend`.
+# Use the repository root Dockerfile so the backend and frontend are deployed together.
+# Set CORS_ORIGIN in Render to the final service URL after the app is created.

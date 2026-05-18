@@ -2,15 +2,16 @@
 
 Production stack for the KEMRI Reproductive Health Survey system.
 
-The repository now has one production backend and one production frontend:
-- Backend: `backend/` with MySQL
-- Frontend: `frontend/` built as a static production bundle
-- Local production-style orchestration: `docker-compose.yml`
+The repository now ships as a single production container built from the root `Dockerfile`:
+- Backend API: Express + Supabase
+- Frontend: React static bundle served by the same container
+- Local orchestration: `docker-compose.yml`
 
 ## Documentation
 
 - [Languages Used](LANGUAGES_USED.md)
 - [API Documentation](API_DOCUMENTATION.md)
+- [Supabase Production Setup](SUPABASE_PRODUCTION_SETUP.md)
 - [Railway Deployment](RAILWAY_DEPLOYMENT.md)
 - [Render Deployment Guide](render/DEPLOYMENT.md)
 
@@ -18,9 +19,9 @@ The repository now has one production backend and one production frontend:
 
 ```
 KEMRI 001/
-├── backend/                 # MySQL API service
+├── backend/                 # Supabase API service
 ├── frontend/                # React production client
-├── database/                # Shared schema files
+├── supabase/                # Supabase SQL setup scripts
 ├── docker-compose.yml       # Full production stack
 ├── Dockerfile               # Backend production image
 └── README.md
@@ -55,27 +56,24 @@ docker compose up --build
 
 Backend environment variables:
 ```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=kemri_rh_survey
+SUPABASE_URL=https://qdbkdimgwfyemcgeqicr.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 PORT=3000
 NODE_ENV=production
-CORS_ORIGIN=http://localhost:8080
+CORS_ORIGIN=https://your-production-domain
 ```
 
 Frontend environment variable:
 ```env
-VITE_API_URL=http://localhost:3000/api/v1
+VITE_API_URL=/api/v1
 ```
 
 ## Production Notes
 
-- Use the MySQL backend in `backend/` for production.
-- The root SQLite implementation is legacy and should not be used for deployment.
+- Use the root `Dockerfile` for production so the API and frontend stay on one origin.
+- Run `supabase/setup.sql` in Supabase SQL Editor before deployment.
 - Health and readiness checks are available at `/health` and `/ready`.
-- The frontend is built separately and served as static content.
+- The frontend uses same-origin API calls through `/api/v1`.
 
 ## API Endpoints
 

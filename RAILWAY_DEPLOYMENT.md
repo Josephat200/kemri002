@@ -10,21 +10,16 @@ Use the repository root `Dockerfile` for Railway. It builds the backend and fron
 
 ## Required Environment Variables
 
-Set the backend database values in Railway:
+Set the backend Supabase values in Railway:
 
 ```env
-DB_HOST=...
-DB_PORT=3306
-DB_USER=...
-DB_PASSWORD=...
-DB_NAME=kemri_rh_survey
+SUPABASE_URL=https://qdbkdimgwfyemcgeqicr.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 NODE_ENV=production
 PORT=3000
 API_PREFIX=/api/v1
-CORS_ORIGIN=
+CORS_ORIGIN=<your-railway-service-url>
 ```
-
-If your Railway MySQL service provides a `DATABASE_URL`, the backend will use it automatically.
 
 ## API URL
 
@@ -41,4 +36,4 @@ That keeps browser requests working when the frontend and API are served from th
 Railway can use:
 
 - `/health` for liveness
-- `/ready` for database readiness
+- `/ready` for Supabase readiness

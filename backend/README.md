@@ -8,12 +8,10 @@ A Node.js + Express REST API backend for the KEMRI Reproductive Health Survey da
 backend/
 ├── src/
 │   ├── config/              # Configuration files
-│   │   ├── database.ts      # MySQL connection pool
+│   │   ├── supabase.ts      # Supabase client
 │   │   └── logger.ts        # Winston logger setup
 │   ├── types/               # TypeScript interfaces
 │   │   └── respondent.ts    # Respondent types and interfaces
-│   ├── models/              # Data models
-│   │   └── RespondentModel.ts  # Database operations
 │   ├── services/            # Business logic layer
 │   │   └── RespondentService.ts # Service methods
 │   ├── controllers/         # Route handlers
@@ -25,8 +23,8 @@ backend/
 │   │   ├── validateRequest.ts # Request validation
 │   │   └── validation.ts    # Joi validation schemas
 │   └── index.ts             # Application entry point
-├── database/
-│   └── schema.sql           # Database schema
+├── ../supabase/
+│   └── setup.sql            # One-shot Supabase SQL setup
 ├── logs/                    # Application logs
 ├── dist/                    # Compiled JavaScript
 ├── package.json
@@ -56,20 +54,17 @@ npm install
 cp .env.example .env
 ```
 
-Edit `.env` with your database credentials:
+Edit `.env` with your Supabase credentials:
 ```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=kemri_rh_survey
+SUPABASE_URL=https://qdbkdimgwfyemcgeqicr.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 PORT=3000
 NODE_ENV=development
 ```
 
-4. **Create database:**
+4. **Create database objects in Supabase:**
 ```bash
-mysql -u root -p < database/schema.sql
+# Run supabase/setup.sql in Supabase SQL Editor
 ```
 
 ## Running the Application
@@ -202,10 +197,10 @@ GET /respondents/stats/summary
    - Error handling
    - Logging
 
-3. **Model Layer** (`RespondentModel`)
-   - Database operations (CRUD)
-   - SQL queries
-   - Data persistence
+3. **Supabase Data Layer**
+  - Database operations (CRUD)
+  - Query composition through the Supabase client
+  - Data persistence and readiness checks
 
 4. **Middleware**
    - Request validation with Joi

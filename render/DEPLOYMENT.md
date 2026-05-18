@@ -1,28 +1,33 @@
 # Deploying to Render
 
-Steps to deploy this repository to Render:
+Use the repository root `Dockerfile` as a single production service. It builds the backend and frontend together, then serves the frontend and API from the same container.
 
-1. Connect your GitHub/GitLab repo to Render.
+## Render Setup
 
-2. Create two new services on Render:
-   - Backend: choose "Web Service", environment `Docker`, and point the Dockerfile to `backend/Dockerfile`.
-   - Frontend: choose "Web Service", environment `Docker`, and point the Dockerfile to `frontend/Dockerfile`.
+1. Connect this GitHub repo to Render.
+2. Create a new Web Service from the repository root.
+3. Use the root `Dockerfile`.
+4. Set these environment variables:
 
-Alternatively, you can deploy a single Docker-based service using the repository root `Dockerfile`.
-The root `Dockerfile` builds both the backend and the frontend and places the frontend `dist` output in `/frontend`,
-which the backend serves. To use this option, add the provided `render.yaml` and configure your Render service to use it.
+```env
+NODE_ENV=production
+PORT=3000
+API_PREFIX=/api/v1
+SUPABASE_URL=https://qdbkdimgwfyemcgeqicr.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+CORS_ORIGIN=<your-render-service-url>
+```
 
-3. Provision a MySQL database. Render does not provide a managed MySQL in all plans. Options:
-   - Use an external managed MySQL (AWS RDS, DigitalOcean, ClearDB, PlanetScale) and copy its connection details.
-   - If you must use Postgres on Render, you'll need to migrate the code from MySQL -> Postgres (not covered here).
+## Frontend API Base
 
-4. In the Render dashboard, for the `kemri-backend` service, set the environment variables listed in `.env.example`.
+The frontend is built for same-origin API access in production:
 
-5. Configure `VITE_API_BASE_URL` for the frontend service to point at the backend's public URL.
+```env
+VITE_API_URL=/api/v1
+```
 
-6. If your backend requires database migrations or seed scripts, run them as one-off jobs in Render or add startup scripts in the Dockerfile.
+## Notes
 
-Notes and tips:
-- Keep secrets in Render's environment variables (do not commit `.env`).
-- If you want Render to build the frontend as a static site, consider switching to a `static` service and use the `dist` folder as the publish path after building inside the Dockerfile.
-- Test the deployed services and ensure CORS and environment-specific configuration match production.
+- Keep `SUPABASE_SERVICE_ROLE_KEY` private and backend-only.
+- Run the Supabase SQL setup before the first deploy.
+- After the Render service is created, set `CORS_ORIGIN` to the deployed service URL if needed.

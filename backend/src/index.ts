@@ -6,7 +6,7 @@ import path from 'path';
 import respondentRoutes from './routes/respondents';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import logger from './config/logger';
-import pool from './config/database';
+import { verifySupabaseConnection } from './config/supabase';
 
 // Load environment variables
 dotenv.config();
@@ -62,18 +62,18 @@ app.get('/health', (req, res) => {
 
 app.get('/ready', async (req, res) => {
   try {
-    await pool.query('SELECT 1');
+    await verifySupabaseConnection();
 
     res.json({
       status: 'READY',
-      database: 'connected',
+      persistence: 'supabase',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     logger.error(`Readiness check failed: ${error}`);
     res.status(503).json({
       status: 'NOT_READY',
-      database: 'disconnected',
+      persistence: 'supabase',
       timestamp: new Date().toISOString(),
     });
   }

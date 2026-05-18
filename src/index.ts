@@ -5,8 +5,7 @@ import dotenv from 'dotenv';
 import respondentRoutes from './routes/respondents';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import logger from './config/logger';
-import { initializeDatabase } from './config/sqlite';
-import { initializeSQLiteSchema } from './config/schema';
+import { verifySupabaseConnection } from './config/supabase';
 
 // Load environment variables
 dotenv.config();
@@ -39,6 +38,25 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/ready', async (req, res) => {
+  try {
+    await verifySupabaseConnection();
+
+    res.json({
+      status: 'READY',
+      persistence: 'supabase',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error(`Readiness check failed: ${error}`);
+    res.status(503).json({
+      status: 'NOT_READY',
+      persistence: 'supabase',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 // API Routes
 app.use(`${API_PREFIX}/respondents`, respondentRoutes);
 
@@ -48,23 +66,9 @@ app.use(notFoundHandler);
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Initialize database and start server
-const startServer = async () => {
-  try {
-    await initializeDatabase();
-    await initializeSQLiteSchema();
-    logger.info('Database initialized successfully');
-
-    app.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT}`);
-      logger.info(`API available at http://localhost:${PORT}${API_PREFIX}`);
-    });
-  } catch (error) {
-    logger.error(`Failed to start server: ${error}`);
-    process.exit(1);
-  }
-};
-
-startServer();
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`API available at http://localhost:${PORT}${API_PREFIX}`);
+});
 
 export default app;
